@@ -527,6 +527,25 @@
             z-index: 999;
         }
 
+        /* Close button for mobile sidebar */
+        .sidebar-close {
+            display: none;
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: #ececec;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            line-height: 1;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .hamburger {
@@ -537,10 +556,16 @@
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
                 z-index: 1000;
+                position: relative;
+                padding-top: 56px; /* Make room for close button */
             }
 
             .sidebar.open {
                 transform: translateX(0);
+            }
+
+            .sidebar-close {
+                display: flex;
             }
 
             .sidebar-overlay.show {
@@ -576,6 +601,7 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
+        <button class="sidebar-close" onclick="closeSidebar()">×</button>
         <button class="new-chat-btn" onclick="resetChat()">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 5v14M5 12h14"/>
