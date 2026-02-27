@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MichaelGPT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Söhne', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #212121;
+            color: #ececec;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 260px;
+            background: #171717;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            z-index: 100;
+        }
+
+        .new-chat-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: #ececec;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .new-chat-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .sidebar-section {
+            margin-top: 24px;
+        }
+
+        .sidebar-label {
+            font-size: 12px;
+            color: #888;
+            padding: 8px 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #ccc;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .sidebar-item.active {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .sidebar-spacer {
+            flex: 1;
+        }
+
+        .sidebar-footer {
+            padding: 12px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10a37f, #1a7f5a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .sidebar-footer-text {
+            font-size: 14px;
+        }
+
+        /* Main Content */
+        .main {
+            margin-left: 260px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .model-select {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: transparent;
+            border: none;
+            color: #ececec;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .model-select svg {
+            opacity: 0.6;
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* Welcome Screen */
+        .welcome {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .welcome-logo {
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #10a37f 0%, #0d8a6f 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(16, 163, 127, 0.3);
+        }
+
+        .welcome h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .welcome p {
+            color: #888;
+            font-size: 15px;
+            max-width: 400px;
+            line-height: 1.5;
+            margin-bottom: 32px;
+        }
+
+        /* Suggested Prompts */
+        .prompts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .prompt-card {
+            background: #2f2f2f;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 14px 16px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .prompt-card:hover {
+            background: #3a3a3a;
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .prompt-card-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #ececec;
+            margin-bottom: 4px;
+        }
+
+        .prompt-card-subtitle {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Messages */
+        .messages {
+            max-width: 768px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .message {
+            display: flex;
+            gap: 16px;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .message-avatar.user {
+            background: #5436da;
+        }
+
+        .message-avatar.assistant {
+            background: #10a37f;
+        }
+
+        .message-content {
+            flex: 1;
+            padding-top: 4px;
+        }
+
+        .message-role {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .message-text {
+            font-size: 15px;
+            line-height: 1.7;
+            color: #d1d1d1;
+        }
+
+        .message-text p {
+            margin-bottom: 12px;
+        }
+
+        .message-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-text strong {
+            color: #ececec;
+            font-weight: 600;
+        }
+
+        .message-text ul {
+            margin: 12px 0;
+            padding-left: 20px;
+        }
+
+        .message-text li {
+            margin-bottom: 6px;
+        }
+
+        /* App Card in response */
+        .app-card {
+            background: #2f2f2f;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+        }
+
+        .app-card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .app-card-content h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .app-card-content p {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 8px !important;
+        }
+
+        .app-card-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .app-card-tag {
+            font-size: 11px;
+            padding: 3px 8px;
+            background: rgba(16, 163, 127, 0.2);
+            color: #10a37f;
+            border-radius: 4px;
+        }
+
+        /* Stats Card */
+        .stats-card {
+            background: linear-gradient(135deg, #1a3a2f 0%, #0d1f1a 100%);
+            border: 1px solid rgba(16, 163, 127, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #10a37f;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 16px 20px 24px;
+            background: #212121;
+        }
+
+        .input-container {
+            max-width: 768px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .input-box {
+            background: #2f2f2f;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 12px 48px 12px 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-box:focus-within {
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .input-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ececec;
+            font-size: 15px;
+        }
+
+        .input-box input::placeholder {
+            color: #666;
+        }
+
+        .send-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #10a37f;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .send-btn:hover {
+            background: #0d8a6f;
+        }
+
+        .send-btn:disabled {
+            background: #444;
+            cursor: not-allowed;
+        }
+
+        .input-hint {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        /* Typing indicator */
+        .typing {
+            display: flex;
+            gap: 4px;
+            padding: 8px 0;
+        }
+
+        .typing span {
+            width: 8px;
+            height: 8px;
+            background: #10a37f;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing span:nth-child(1) { animation-delay: 0s; }
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main {
+                margin-left: 0;
+            }
+
+            .prompts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <button class="new-chat-btn" onclick="resetChat()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12h14"/>
+            </svg>
+            New chat
+        </button>
+
+        <div class="sidebar-section">
+            <div class="sidebar-label">Quick Questions</div>
+            <div class="sidebar-item" onclick="askQuestion('about')">👤 About Michael</div>
+            <div class="sidebar-item" onclick="askQuestion('apps')">📱 His Apps</div>
+            <div class="sidebar-item" onclick="askQuestion('work')">💼 Growth Work</div>
+            <div class="sidebar-item" onclick="askQuestion('contact')">✉️ Contact</div>
+        </div>
+
+        <div class="sidebar-spacer"></div>
+
+        <div class="sidebar-footer">
+            <div class="avatar">MH</div>
+            <div class="sidebar-footer-text">MichaelGPT</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        <div class="header">
+            <button class="model-select">
+                MichaelGPT
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="chat-area" id="chatArea">
+            <!-- Welcome Screen -->
+            <div class="welcome" id="welcomeScreen">
+                <div class="welcome-logo">👨‍💻</div>
+                <h1>MichaelGPT</h1>
+                <p>Ask me anything about Michael Hulen—his apps, growth experience, or how to get in touch.</p>
+                
+                <div class="prompts-grid">
+                    <div class="prompt-card" onclick="askQuestion('smartesti')">
+                        <div class="prompt-card-title">Tell me about SmartEsti</div>
+                        <div class="prompt-card-subtitle">AI construction estimates</div>
+                    </div>
+                    <div class="prompt-card" onclick="askQuestion('results')">
+                        <div class="prompt-card-title">What results has he driven?</div>
+                        <div class="prompt-card-subtitle">Growth metrics & wins</div>
+                    </div>
+                    <div class="prompt-card" onclick="askQuestion('about')">
+                        <div class="prompt-card-title">Who is Michael?</div>
+                        <div class="prompt-card-subtitle">Background & story</div>
+                    </div>
+                    <div class="prompt-card" onclick="askQuestion('hire')">
+                        <div class="prompt-card-title">Why should I hire him?</div>
+                        <div class="prompt-card-subtitle">Skills & experience</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Container -->
+            <div class="messages" id="messages" style="display: none;"></div>
+        </div>
+
+        <div class="input-area">
+            <div class="input-container">
+                <div class="input-box">
+                    <input type="text" id="userInput" placeholder="Ask about Michael..." onkeypress="handleKeyPress(event)">
+                </div>
+                <button class="send-btn" onclick="sendMessage()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="input-hint">MichaelGPT knows about Michael's apps, growth work, and background.</div>
+        </div>
+    </div>
+
+    <script>
+        const responses = {
+            smartesti: {
+                text: `<p><strong>SmartEsti</strong> is Michael's AI-powered construction cost estimation app.</p>
+                <div class="app-card">
+                    <div class="app-card-icon" style="background: linear-gradient(135deg, #ffcc66, #ff9933);">🏗️</div>
+                    <div class="app-card-content">
+                        <h4>SmartEsti</h4>
+                        <p>Snap a photo of any construction project and get instant, accurate cost estimates powered by AI.</p>
+                        <p><a href="https://testflight.apple.com/join/hPbGz6e3" target="_blank" style="color: #10a37f; text-decoration: none;">→ Try on TestFlight</a></p>
+                        <div class="app-card-tags">
+                            <span class="app-card-tag">SwiftUI</span>
+                            <span class="app-card-tag">Claude API</span>
+                            <span class="app-card-tag">Vision AI</span>
+                        </div>
+                    </div>
+                </div>
+                <p>The app solves a real pain point—contractors and homeowners often have no idea what projects should cost. Michael built it to demystify construction pricing using AI vision analysis.</p>`
+            },
+            done: {
+                text: `<p><strong>Done.</strong> is a compassionate app for gambling addiction recovery.</p>
+                <div class="app-card">
+                    <div class="app-card-icon" style="background: linear-gradient(135deg, #66ccff, #3399ff);">🎰</div>
+                    <div class="app-card-content">
+                        <h4>Done.</h4>
+                        <p>Track your recovery progress, build streaks, and find support on your journey to overcome gambling addiction.</p>
+                        <p><a href="https://testflight.apple.com/join/bsCYYaTx" target="_blank" style="color: #10a37f; text-decoration: none;">→ Try on TestFlight</a></p>
+                        <div class="app-card-tags">
+                            <span class="app-card-tag">SwiftUI</span>
+                            <span class="app-card-tag">HealthKit</span>
+                            <span class="app-card-tag">Supabase</span>
+                        </div>
+                    </div>
+                </div>
+                <p>Michael identified an underserved market—most addiction recovery apps focus on substances, leaving gambling largely unaddressed despite affecting millions.</p>`
+            },
+            repunlock: {
+                text: `<p><strong>RepUnlock</strong> gamifies fitness by tying it to screen time.</p>
+                <div class="app-card">
+                    <div class="app-card-icon" style="background: linear-gradient(135deg, #cc99ff, #9966cc);">💪</div>
+                    <div class="app-card-content">
+                        <h4>RepUnlock</h4>
+                        <p>Do pushups to unlock your phone. Turns screen time addiction into a fitness opportunity.</p>
+                        <p><a href="https://apps.apple.com/us/app/repunlock-screen-time-control/id6739925652" target="_blank" style="color: #10a37f; text-decoration: none;">→ Download on App Store</a></p>
+                        <div class="app-card-tags">
+                            <span class="app-card-tag">SwiftUI</span>
+                            <span class="app-card-tag">Screen Time API</span>
+                            <span class="app-card-tag">Core Motion</span>
+                        </div>
+                    </div>
+                </div>
+                <p>The concept is simple but clever—instead of fighting phone addiction, redirect it into something healthy. Every unlock costs you reps.</p>`
+            },
+            tguard: {
+                text: `<p><strong>T-Guard</strong> is a personal security app.</p>
+                <div class="app-card">
+                    <div class="app-card-icon" style="background: linear-gradient(135deg, #99ff99, #66cc66);">🛡️</div>
+                    <div class="app-card-content">
+                        <h4>T-Guard</h4>
+                        <p>Your personal digital guardian for enhanced security and peace of mind.</p>
+                        <p><a href="https://apps.apple.com/us/app/tscan-healthy-food-scanner/id6747930505" target="_blank" style="color: #10a37f; text-decoration: none;">→ Download on App Store</a></p>
+                        <div class="app-card-tags">
+                            <span class="app-card-tag">SwiftUI</span>
+                            <span class="app-card-tag">Security</span>
+                            <span class="app-card-tag">Encryption</span>
+                        </div>
+                    </div>
+                </div>`
+            },
+            apps: {
+                text: `<p>Michael has built <strong>4 iOS apps</strong> as a solo founder:</p>
+                <div class="app-card">
+                    <div class="app-card-icon" style="background: linear-gradient(135deg, #ffcc66, #ff9933);">🏗️</div>
+                    <div class="app-card-content">
+                        <h4>SmartEsti</h4>
+                        <p>AI-powered construction cost estimation. Snap a photo, get instant estimates.</p>
+                        <p><a href="https://testflight.apple.com/join/hPbGz6e3" target="_blank" style="color: #10a37f; text-decoration: none; font-size: 12px;">→ Try on TestFlight</a></p>
+                    </div>
+                </div>
+                <div class="app-card">
+                    <div class="app-card-icon" style="background: linear-gradient(135deg, #66ccff, #3399ff);">🎰</div>
+                    <div class="app-card-content">
+                        <h4>Done.</h4>
+                        <p>Gambling addiction recovery companion. Track progress, build streaks.</p>
+                        <p><a href="https://testflight.apple.com/join/bsCYYaTx" target="_blank" style="color: #10a37f; text-decoration: none; font-size: 12px;">→ Try on TestFlight</a></p>
+                    </div>
+                </div>
+                <div class="app-card">
+                    <div class="app-card-icon" style="background: linear-gradient(135deg, #cc99ff, #9966cc);">💪</div>
+                    <div class="app-card-content">
+                        <h4>RepUnlock</h4>
+                        <p>Earn screen time through pushups. Gamified fitness meets digital wellness.</p>
+                        <p><a href="https://apps.apple.com/us/app/repunlock-screen-time-control/id6739925652" target="_blank" style="color: #10a37f; text-decoration: none; font-size: 12px;">→ Download on App Store</a></p>
+                    </div>
+                </div>
+                <div class="app-card">
+                    <div class="app-card-icon" style="background: linear-gradient(135deg, #99ff99, #66cc66);">🛡️</div>
+                    <div class="app-card-content">
+                        <h4>T-Guard</h4>
+                        <p>Personal digital security and peace of mind.</p>
+                        <p><a href="https://apps.apple.com/us/app/tscan-healthy-food-scanner/id6747930505" target="_blank" style="color: #10a37f; text-decoration: none; font-size: 12px;">→ Download on App Store</a></p>
+                    </div>
+                </div>
+                <p>All built with SwiftUI and modern iOS APIs. Michael's approach: find underserved markets, ship fast, iterate on data.</p>`
+            },
+            results: {
+                text: `<p>Here's what Michael has achieved:</p>
+                <div class="stats-card">
+                    <div class="stats-grid">
+                        <div>
+                            <div class="stat-value">100M+</div>
+                            <div class="stat-label">Views Generated</div>
+                        </div>
+                        <div>
+                            <div class="stat-value">150K+</div>
+                            <div class="stat-label">App Downloads</div>
+                        </div>
+                        <div>
+                            <div class="stat-value">400K+</div>
+                            <div class="stat-label">New Followers</div>
+                        </div>
+                    </div>
+                </div>
+                <p><strong>Key wins:</strong></p>
+                <ul>
+                    <li><strong>Going Solo:</strong> Scaled from $1K to $10K MRR, reached 150K downloads</li>
+                    <li><strong>BrookeDoesEverything:</strong> Built to 100M+ views, 400K+ followers</li>
+                    <li><strong>SportifAI:</strong> Led growth for MIT Sandbox-backed AI fitness platform</li>
+                </ul>
+                <p>Michael knows how to find viral angles and scale them profitably.</p>`
+            },
+            about: {
+                text: `<p><strong>Michael Hulen</strong> is a solo founder and iOS developer based in Tampa, Florida.</p>
+                <p>He runs <strong>Limited Labs</strong>, building consumer apps that solve real problems for underserved markets. His philosophy: ship fast, iterate on data, scale what works.</p>
+                <p>Michael graduated in 2023 and has been building ever since. His track record includes apps with hundreds of thousands of downloads and nearly a million in revenue.</p>
+                <p><strong>Fellowship:</strong> MIT Sandbox & UM6P Explorer Program Entrepreneurial Fellow (2024 - 2025)</p>
+                <p><strong>Hobbies:</strong> Piano, Gym, and exploring food places.</p>
+                <p>Currently open to growth, product management, and programming roles.</p>`
+            },
+            work: {
+                text: `<p>Michael has driven growth for several companies:</p>
+                <p><strong>🏋️ SportifAI</strong> — Head of Growth (MIT Sandbox-backed)<br>May 2024 - May 2025</p>
+                <p><strong>✈️ Going Solo</strong> — Head of Growth ($1K → $10K MRR, 150K downloads)<br>Oct 2024 - Jun 2025</p>
+                <p><strong>📱 BrookeDoesEverything</strong> — Growth Strategy Consultant (100M+ views, 400K+ followers)<br>May 2025 - July 2025</p>
+                <p><strong>🔄 Cling (by ChurnOpp)</strong> — Growth & Product Strategy Advisor<br>Feb 2025 - Aug 2025</p>
+                <p><strong>👗 Popcloset</strong> — Founder & CEO<br>Aug 2020 - Jun 2023</p>
+`
+            },
+            hire: {
+                text: `<p><strong>Why hire Michael?</strong></p>
+                <p>He's not just a marketer who talks strategy—he builds and ships. And he's not just a developer who builds—he knows how to make things go viral.</p>
+                <p><strong>The rare combination:</strong></p>
+                <ul>
+                    <li>✅ Can build the product (SwiftUI, iOS, full-stack)</li>
+                    <li>✅ Can grow the product (100M+ views, viral content)</li>
+                    <li>✅ Can monetize the product ($800K+ revenue)</li>
+                </ul>
+                <div class="stats-card">
+                    <div class="stats-grid">
+                        <div>
+                            <div class="stat-value">100M+</div>
+                            <div class="stat-label">Views</div>
+                        </div>
+                        <div>
+                            <div class="stat-value">150K+</div>
+                            <div class="stat-label">Downloads</div>
+                        </div>
+                        <div>
+                            <div class="stat-value">400K+</div>
+                            <div class="stat-label">Followers</div>
+                        </div>
+                    </div>
+                </div>
+                <p>He's looking for growth roles where he can own outcomes and move fast. If that sounds like your team, reach out.</p>`
+            },
+            contact: {
+                text: `<p><strong>Let's connect:</strong></p>
+                <p>📧 <strong>Email:</strong> michael.hulen.jobs@gmail.com</p>
+                <p>💼 <strong>LinkedIn:</strong> linkedin.com/in/michaelhulen</p>
+                <p>🐦 <strong>Twitter:</strong> @michaelhulen</p>
+                <p>Michael is currently open to growth, product management, and programming roles. He responds quickly to genuine outreach.</p>`
+            }
+        };
+
+        // Aliases
+        responses['who is michael'] = responses.about;
+        responses['background'] = responses.about;
+        responses['tell me about michael'] = responses.about;
+        responses['what apps'] = responses.apps;
+        responses['his apps'] = responses.apps;
+        responses['show me his apps'] = responses.apps;
+        responses['growth'] = responses.results;
+        responses['metrics'] = responses.results;
+        responses['achievements'] = responses.results;
+        responses['experience'] = responses.work;
+        responses['why hire'] = responses.hire;
+        responses['skills'] = responses.hire;
+        responses['email'] = responses.contact;
+        responses['linkedin'] = responses.contact;
+        responses['reach out'] = responses.contact;
+
+        let chatStarted = false;
+
+        function resetChat() {
+            chatStarted = false;
+            document.getElementById('welcomeScreen').style.display = 'flex';
+            document.getElementById('messages').style.display = 'none';
+            document.getElementById('messages').innerHTML = '';
+        }
+
+        function askQuestion(key) {
+            const input = document.getElementById('userInput');
+            
+            const prompts = {
+                smartesti: "Tell me about SmartEsti",
+                done: "Tell me about Done.",
+                repunlock: "Tell me about RepUnlock",
+                tguard: "Tell me about T-Guard",
+                apps: "What apps has Michael built?",
+                results: "What results has Michael driven?",
+                about: "Who is Michael?",
+                work: "What's Michael's work experience?",
+                hire: "Why should I hire Michael?",
+                contact: "How can I contact Michael?"
+            };
+
+            input.value = prompts[key] || key;
+            sendMessage(key);
+        }
+
+        function sendMessage(presetKey = null) {
+            const input = document.getElementById('userInput');
+            const query = input.value.trim().toLowerCase();
+            
+            if (!query) return;
+
+            // Start chat mode
+            if (!chatStarted) {
+                chatStarted = true;
+                document.getElementById('welcomeScreen').style.display = 'none';
+                document.getElementById('messages').style.display = 'flex';
+            }
+
+            // Add user message
+            addMessage('user', input.value);
+            input.value = '';
+
+            // Find response
+            let responseKey = presetKey;
+            if (!responseKey) {
+                // Simple keyword matching
+                if (query.includes('smartesti')) responseKey = 'smartesti';
+                else if (query.includes('done')) responseKey = 'done';
+                else if (query.includes('repunlock') || query.includes('pushup')) responseKey = 'repunlock';
+                else if (query.includes('t-guard') || query.includes('tguard') || query.includes('security')) responseKey = 'tguard';
+                else if (query.includes('app')) responseKey = 'apps';
+                else if (query.includes('result') || query.includes('metric') || query.includes('achieve') || query.includes('number')) responseKey = 'results';
+                else if (query.includes('who') || query.includes('about') || query.includes('background') || query.includes('michael')) responseKey = 'about';
+                else if (query.includes('work') || query.includes('experience') || query.includes('job')) responseKey = 'work';
+                else if (query.includes('hire') || query.includes('why') || query.includes('skill')) responseKey = 'hire';
+                else if (query.includes('contact') || query.includes('email') || query.includes('reach') || query.includes('connect')) responseKey = 'contact';
+            }
+
+            // Show typing indicator
+            showTyping();
+
+            // Respond after delay
+            setTimeout(() => {
+                hideTyping();
+                
+                if (responseKey && responses[responseKey]) {
+                    addMessage('assistant', responses[responseKey].text);
+                } else {
+                    addMessage('assistant', `<p>I can tell you about Michael's apps (SmartEsti, Done., RepUnlock, T-Guard), his growth work, his background, or how to contact him.</p><p>Try asking something like "What apps has he built?" or "Why should I hire him?"</p>`);
+                }
+
+                // Scroll to bottom
+                document.getElementById('chatArea').scrollTop = document.getElementById('chatArea').scrollHeight;
+            }, 800 + Math.random() * 600);
+        }
+
+        function addMessage(role, content) {
+            const messages = document.getElementById('messages');
+            const avatar = role === 'user' ? '👤' : '👨‍💻';
+            const roleName = role === 'user' ? 'You' : 'MichaelGPT';
+            
+            messages.innerHTML += `
+                <div class="message">
+                    <div class="message-avatar ${role}">${avatar}</div>
+                    <div class="message-content">
+                        <div class="message-role">${roleName}</div>
+                        <div class="message-text">${content}</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('chatArea').scrollTop = document.getElementById('chatArea').scrollHeight;
+        }
+
+        function showTyping() {
+            const messages = document.getElementById('messages');
+            messages.innerHTML += `
+                <div class="message" id="typingIndicator">
+                    <div class="message-avatar assistant">👨‍💻</div>
+                    <div class="message-content">
+                        <div class="typing">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('chatArea').scrollTop = document.getElementById('chatArea').scrollHeight;
+        }
+
+        function hideTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
