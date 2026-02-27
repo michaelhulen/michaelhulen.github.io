@@ -483,7 +483,7 @@
             position: fixed;
             top: 12px;
             left: 12px;
-            z-index: 1001;
+            z-index: 500;
             background: #171717;
             border: 1px solid rgba(255,255,255,0.2);
             border-radius: 8px;
@@ -501,19 +501,11 @@
             height: 2px;
             background: #ececec;
             border-radius: 1px;
-            transition: all 0.3s;
         }
 
-        .hamburger.active span:nth-child(1) {
-            transform: rotate(45deg) translate(5px, 5px);
-        }
-
-        .hamburger.active span:nth-child(2) {
-            opacity: 0;
-        }
-
-        .hamburger.active span:nth-child(3) {
-            transform: rotate(-45deg) translate(7px, -6px);
+        /* Hide hamburger when sidebar is open or when chat is started */
+        .hamburger.hidden {
+            display: none !important;
         }
 
         .sidebar-overlay {
@@ -926,6 +918,12 @@
             document.getElementById('welcomeScreen').style.display = 'flex';
             document.getElementById('messages').style.display = 'none';
             document.getElementById('messages').innerHTML = '';
+
+            // Show hamburger menu on welcome screen (mobile only)
+            showHamburgerMenu();
+
+            // Close sidebar if open
+            closeSidebar();
         }
 
         function askQuestion(key) {
@@ -963,6 +961,9 @@
                 chatStarted = true;
                 document.getElementById('welcomeScreen').style.display = 'none';
                 document.getElementById('messages').style.display = 'flex';
+
+                // Hide hamburger menu when chat starts
+                hideHamburgerMenu();
             }
 
             // Add user message
@@ -1052,22 +1053,30 @@
         // Mobile menu functions
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidebar');
-            const hamburger = document.querySelector('.hamburger');
             const overlay = document.querySelector('.sidebar-overlay');
 
-            sidebar.classList.toggle('open');
-            hamburger.classList.toggle('active');
-            overlay.classList.toggle('show');
+            sidebar.classList.add('open');
+            overlay.classList.add('show');
         }
 
         function closeSidebar() {
             const sidebar = document.querySelector('.sidebar');
-            const hamburger = document.querySelector('.hamburger');
             const overlay = document.querySelector('.sidebar-overlay');
 
             sidebar.classList.remove('open');
-            hamburger.classList.remove('active');
             overlay.classList.remove('show');
+        }
+
+        // Hide hamburger when chat starts
+        function hideHamburgerMenu() {
+            const hamburger = document.querySelector('.hamburger');
+            hamburger.classList.add('hidden');
+        }
+
+        // Show hamburger on welcome screen
+        function showHamburgerMenu() {
+            const hamburger = document.querySelector('.hamburger');
+            hamburger.classList.remove('hidden');
         }
     </script>
 </body>
